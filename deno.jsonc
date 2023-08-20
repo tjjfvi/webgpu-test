@@ -7,7 +7,7 @@
   },
   "lock": false,
   "tasks": {
-    "build": "deno bundle --no-check src/index.ts static/index.js && cp src/*.wgsl static/",
+    "build": "deno bundle --no-check src/index.ts static/index.js && cat src/*.wgsl > static/index.wgsl",
     "dev": "DEV=1 deno run -A --watch=src/ server.ts"
   }
 }
