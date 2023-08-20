@@ -16,9 +16,9 @@ const cube_material = Material(vec3f(.3), vec3f(), 0);
 const cube_center = vec3(-.7, 1.2, 0);
 const cube_halfsize = .4;
 
-const bsp_roots_count = 1;
+const bsp_roots_count = 2;
 const bsp_roots = array<u32, bsp_roots_count>(
-  // 0,
+  0,
   1,
 );
 const bsp_count = 7;
