@@ -67,7 +67,6 @@ let output!: GPUBuffer
 let read!: GPUBuffer
 let bindGroup!: GPUBindGroup
 
-resize()
 renderLoop()
 
 function init(size: number) {
@@ -104,8 +103,12 @@ function init(size: number) {
 }
 
 function resize() {
-  width = canvas.width = window.innerWidth
-  height = canvas.height = window.innerHeight
+  if (width !== window.innerWidth) {
+    width = canvas.width = window.innerWidth
+  }
+  if (height !== window.innerHeight) {
+    height = canvas.height = window.innerHeight
+  }
 }
 
 async function render(time: number, iteration: number) {
@@ -148,6 +151,7 @@ async function renderLoop() {
   let iteration = 0
   while (true) {
     console.time("frame")
+    resize()
     await render(Date.now() - start, iteration)
     console.timeEnd("frame")
     await new Promise((r) => window.requestAnimationFrame(r))
