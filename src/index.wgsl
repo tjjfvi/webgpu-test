@@ -42,19 +42,21 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
   let ang = normalize(dst - src);
   let ray = Ray(src, ang);
 
-  var color = vec3f();
+  var color = vec4f();
 
-  for(var i = 0u; i < rounds; i++){
+  var i = 0u;
+  for(; i < rounds; i++){
     color += raycast(ray, xrng(xrng(xrng(xrng(xrng(index) + config.iter)) + i)));
+    if(color.a == 0) { i++; break; }
   }
 
-  color /= f32(rounds);
+  color /= f32(i);
 
   // store[index] += color;
 
   // color = store[index] / f32(config.iter + 1);
 
-  output[index] = pack4x8unorm(vec4f(color, 1));
+  output[index] = pack4x8unorm(vec4f(color.rgb, 1));
 }
 
 const red = vec3(1, .3, .3);
@@ -73,12 +75,13 @@ const bounce_limit = 10;
 
 const too_dark_2 = 0.01;
 
-fn raycast(init_ray: Ray, _rng: u32) -> vec3f {
+fn raycast(init_ray: Ray, _rng: u32) -> vec4f {
   var rng = _rng;
 
   var ray = init_ray;
   var ray_color = vec3f(1, 1, 1);
   var light = vec3f(0, 0, 0);
+  var diffuseness = 0.;
 
   for(var i = 0; i < bounce_limit; i++) {
     let hit = hit(ray);
@@ -108,6 +111,7 @@ fn raycast(init_ray: Ray, _rng: u32) -> vec3f {
 
     light += ray_color * hit.material.emission;
     ray_color *= hit.material.albedo;
+    diffuseness += (1 - hit.material.specularity);
 
     ray = Ray(spot, out);
 
@@ -116,7 +120,7 @@ fn raycast(init_ray: Ray, _rng: u32) -> vec3f {
 
   light += ray_color * ambient(ray);
 
-  return light;
+  return vec4f(light, diffuseness);
 }
 
 const sky_color = vec3f(.6, .8, 1);
