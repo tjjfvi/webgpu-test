@@ -1,11 +1,14 @@
 
 const tau = 6.283185307;
 
+var<private> rng: u32;
+
 fn xrng(rng: u32) -> u32 {
   return rng * 747796405 + 2891336453;
 }
 
-fn rand(rng: u32) -> f32 {
+fn rand() -> f32 {
+  rng = xrng(rng);
   var result = ((rng >> ((rng >> 28) + 4)) ^ rng) * 277803737;
   result = (result >> 22) ^ result;
   return f32(result) / 4294967295.0;

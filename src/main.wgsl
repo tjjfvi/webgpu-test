@@ -42,7 +42,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 
   var i = 0u;
   for(; i < rounds; i++){
-    color += raycast(ray, xrng(xrng(xrng(xrng(xrng(index) + config.iter)) + i)));
+    rng = xrng(xrng(xrng(xrng(xrng(index) + config.iter)) + i));
+    color += raycast(ray);
     if(color.a == 0) { i++; break; }
   }
 

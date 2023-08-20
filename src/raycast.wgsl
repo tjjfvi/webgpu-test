@@ -5,9 +5,7 @@ const bounce_limit = 10;
 
 const too_dark_2 = 0.01;
 
-fn raycast(init_ray: Ray, _rng: u32) -> vec4f {
-  var rng = _rng;
-
+fn raycast(init_ray: Ray) -> vec4f {
   var ray = init_ray;
   var ray_color = vec3f(1, 1, 1);
   var light = vec3f(0, 0, 0);
@@ -27,13 +25,11 @@ fn raycast(init_ray: Ray, _rng: u32) -> vec4f {
     let t1 = perp(hit.norm);
     let t2 = cross(hit.norm, t1);
 
-    rng = xrng(rng);
-    let sin_t_2 = rand(rng);
+    let sin_t_2 = rand();
     let sin_t = sqrt(sin_t_2);
     let cos_t = sqrt(1 - sin_t_2);
 
-    rng = xrng(rng);
-    let psi = rand(rng) * tau;
+    let psi = rand() * tau;
 
     let diffuse = (sin_t * cos(psi)) * t1 + (sin_t * sin(psi)) * t2 + cos_t * hit.norm;
 
