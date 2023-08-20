@@ -20,7 +20,7 @@ fn raycast(init_ray: Ray, _rng: u32) -> vec4f {
       break;
     }
 
-    let spot = ray.src + hit.dist * ray.ang;
+    let spot = ray.src + hit.dist * ray.dir;
 
     let t1 = perp(hit.norm);
     let t2 = cross(hit.norm, t1);
@@ -35,7 +35,7 @@ fn raycast(init_ray: Ray, _rng: u32) -> vec4f {
 
     let diffuse = (sin_t * cos(psi)) * t1 + (sin_t * sin(psi)) * t2 + cos_t * hit.norm;
 
-    let specular = reflect(ray.ang, hit.norm);
+    let specular = reflect(ray.dir, hit.norm);
 
     let out = lerp(diffuse, specular, hit.material.specularity);
 
@@ -55,7 +55,7 @@ fn raycast(init_ray: Ray, _rng: u32) -> vec4f {
 
 struct Ray {
   src: vec3f,
-  ang: vec3f,
+  dir: vec3f,
 }
 
 struct Material {

@@ -35,8 +35,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 
   let dst = camera_pos + camera_x * pos.x + camera_y * pos.y;
   let src = camera_pos - camera_fwd * camera_depth;
-  let ang = normalize(dst - src);
-  let ray = Ray(src, ang);
+  let dir = normalize(dst - src);
+  let ray = Ray(src, dir);
 
   var color = vec4f();
 
