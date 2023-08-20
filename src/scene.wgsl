@@ -41,7 +41,7 @@ fn hit_scene(ray: Ray) -> Hit {
   }
 
   for(var i = 0; i < bsp_roots_count; i++) {
-    let hit = hit_bsp(ray, bsps[bsp_roots[i]]);
+    let hit = hit_bsp(ray, bsp_roots[i]);
     if(hit.dist >= 0 && hit.dist < best_hit.dist) { best_hit = hit; }
   }
 

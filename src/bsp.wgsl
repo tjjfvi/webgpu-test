@@ -7,69 +7,72 @@ struct Bsp {
   out: u32,
 }
 
-fn hit_bsp(_ray: Ray, _bsp: Bsp) -> Hit {
-  var keepSearching = true;
-  for(var i = 0; keepSearching; i++){
-    keepSearching = false;
-    var ray = _ray;
-    var bsp = _bsp;
-    var hit = null_hit;
-    var far = inf;
-    var total_dist = 0f;
-    var n = i;
+struct BspStackEntry {
+  index: u32,
+  near: f32,
+  far: f32,
+  hit: Hit,
+}
 
-    while(true){
-      let d = dot(ray.dir, bsp.norm);
+const bsp_stack_max = 128;
 
-      var t = (bsp.w - dot(ray.src, bsp.norm)) / d;
+const debug_hit = Hit(1, vec3f(1), null_hit.material);
 
-      var short = bsp.out;
-      var long = bsp.in;
+var<private> bsp_stack: array<BspStackEntry, bsp_stack_max>;
 
-      if(d > 0) {
-        long = bsp.out;
-        short = bsp.in;
+fn hit_bsp(ray: Ray, index: u32) -> Hit {
+  var cur = BspStackEntry(index, 0, inf, null_hit);
+  var stack_next = 0u;
+
+  while(true){
+    let near = cur.near;
+    let far = cur.far;
+    let hit = cur.hit;
+    let bsp = bsps[cur.index];
+
+    let d = dot(ray.dir, bsp.norm);
+
+    var t = (bsp.w - dot(ray.src, bsp.norm)) / d;
+
+    let front = d < 0;
+    let head = select(bsp.in, bsp.out, front);
+    let tail = select(bsp.out, bsp.in, front);
+
+    let in_near = t > near;
+    if(in_near && head == 0 && !front) {
+      return hit;
+    }
+
+    let in_far = t < far;
+
+    var new_hit = hit;
+    if(in_near && in_far && front) {
+      new_hit = Hit(t, bsp.norm, bsp.material);
+    }
+
+    if(in_far && tail == 0 && front) {
+      return new_hit;
+    }
+
+    var pushed = false;
+    if(in_far && tail != 0) {
+      cur = BspStackEntry(tail, max(near, t), far, new_hit);
+      pushed = true;
+    }
+
+    if(in_near && head != 0){
+      if(pushed) {
+        bsp_stack[stack_next] = cur;
+        stack_next++;
       }
+      cur = BspStackEntry(head, near, min(far, t), hit);
+      pushed = true;
+    }
 
-      if(t > 0){
-        if(short == 0) {
-          if(d > 0) {
-            return hit;
-          }
-        } else {
-          let branch = n & 1;
-          n = n >> 1;
-          if(branch == 0) {
-            far = min(far, t);
-            bsp = bsps[short];
-            keepSearching = true;
-            continue;
-          }
-        }
-      }
-
-      if(t > far) { break; }
-
-      if(t > 0) {
-        total_dist += t;
-        ray.src = ray.src + t * ray.dir;
-        far -= t;
-        t = 0;
-
-        if(d < 0) {
-          hit = Hit(total_dist, bsp.norm, bsp.material);
-        }
-      }
-
-      if(long == 0) {
-        if(d < 0) {
-          return hit;
-        } else {
-          break;
-        }
-      }
-
-      bsp = bsps[long];
+    if(!pushed){
+      if(stack_next == 0) { break; }
+      stack_next--;
+      cur = bsp_stack[stack_next];
     }
   }
 
