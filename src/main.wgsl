@@ -15,7 +15,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
   if (global_id.x >= config.size.x || global_id.y >= config.size.y) { return; }
 
   let theta = f32(config.time) / 1500;
-  // let theta = radians(10);
+  // let theta = radians(200);
   let phi = -sin(theta * 2) * radians(15);
   let z = normalize(vec3(cos(theta) * cos(phi), sin(phi), sin(theta) * cos(phi)));
   let y = vec3f(0, 1, 0);

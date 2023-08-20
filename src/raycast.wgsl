@@ -20,6 +20,8 @@ fn raycast(init_ray: Ray, _rng: u32) -> vec4f {
       break;
     }
 
+    // return vec4f(hit.norm * hit.norm, 0) * 1 / hit.dist;
+
     let spot = ray.src + hit.dist * ray.dir;
 
     let t1 = perp(hit.norm);
