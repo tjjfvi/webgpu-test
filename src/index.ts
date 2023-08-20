@@ -24,6 +24,7 @@ const bindGroupLayout = device.createBindGroupLayout({
   entries: [
     { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: "read-only-storage" } },
     { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: "storage" } },
+    { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: "storage" } },
   ],
 });
 
@@ -42,13 +43,14 @@ let height = 0
 let bufferSize = 0
 
 const configWrite = device.createBuffer({
-  size: 24,
+  size: 32,
   usage: GPUBufferUsage.MAP_WRITE | GPUBufferUsage.COPY_SRC
 })
 const config = device.createBuffer({
-  size: 24,
+  size: 32,
   usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
 })
+let store!: GPUBuffer
 let output!: GPUBuffer
 let read!: GPUBuffer
 let bindGroup!: GPUBindGroup
@@ -60,6 +62,12 @@ function init(size: number){
   if(bufferSize >= size) return
   size = Math.ceil(size / 1024) * 1024
   bufferSize = size
+
+  store?.destroy()
+  store = device.createBuffer({
+    size: size * 4,
+    usage: GPUBufferUsage.STORAGE,
+  })
 
   output?.destroy()
   output = device.createBuffer({
@@ -77,7 +85,8 @@ function init(size: number){
     layout: bindGroupLayout,
     entries: [
       { binding: 0, resource: { buffer: config }},
-      { binding: 1, resource: { buffer: output }},
+      { binding: 1, resource: { buffer: store }},
+      { binding: 2, resource: { buffer: output }},
     ]
   })
 }
@@ -87,7 +96,7 @@ function resize() {
   height = canvas.height = window.innerHeight
 }
 
-async function render(time: number){
+async function render(time: number, iteration: number){
   const commandEncoder = device.createCommandEncoder();
 
   const imageSize = width * height * 4
@@ -95,7 +104,7 @@ async function render(time: number){
 
   await configWrite.mapAsync(GPUMapMode.WRITE);
   const configBuffer = configWrite.getMappedRange();
-  new Uint32Array(configBuffer).set([width, height, time]);
+  new Uint32Array(configBuffer).set([width, height, time, iteration]);
   configWrite.unmap();
 
   commandEncoder.copyBufferToBuffer(configWrite, 0, config, 0, config.size);
@@ -118,10 +127,15 @@ async function render(time: number){
   read.unmap()
 }
 
+
 async function renderLoop() {
   const start = Date.now()
+  let iteration = 0
   while(true) {
-    await render(Date.now() - start)
+    console.time("frame")
+    await render(Date.now() - start, iteration)
+    console.timeEnd("frame")
     await new Promise(r => window.requestAnimationFrame(r))
+    iteration ++
   }
 }
