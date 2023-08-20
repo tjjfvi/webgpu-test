@@ -4,29 +4,41 @@ const canvas = document.getElementById("canvas") as HTMLCanvasElement
 const ctx = canvas.getContext("2d")
 
 if (!("gpu" in navigator)) {
-  alert("WebGPU is not supported.");
-  throw 0;
+  alert("WebGPU is not supported.")
+  throw 0
 }
 
-const gpu = navigator.gpu as GPU;
-const adapter = await gpu.requestAdapter();
+const gpu = navigator.gpu as GPU
+const adapter = await gpu.requestAdapter()
 if (!adapter) {
-  alert("Failed to get GPU adapter.");
-  throw 0;
+  alert("Failed to get GPU adapter.")
+  throw 0
 }
-const device = await adapter.requestDevice();
+const device = await adapter.requestDevice()
 
 const shaderModule = device.createShaderModule({
   code: await fetch("./index.wgsl").then((r) => r.text()),
-});
+})
 
 const bindGroupLayout = device.createBindGroupLayout({
   entries: [
-    { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: "read-only-storage" } },
-    { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: "storage" } },
-    { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: "storage" } },
+    {
+      binding: 0,
+      visibility: GPUShaderStage.COMPUTE,
+      buffer: { type: "read-only-storage" },
+    },
+    {
+      binding: 1,
+      visibility: GPUShaderStage.COMPUTE,
+      buffer: { type: "storage" },
+    },
+    {
+      binding: 2,
+      visibility: GPUShaderStage.COMPUTE,
+      buffer: { type: "storage" },
+    },
   ],
-});
+})
 
 const pipeline = device.createComputePipeline({
   layout: device.createPipelineLayout({
@@ -36,7 +48,7 @@ const pipeline = device.createComputePipeline({
     module: shaderModule,
     entryPoint: "main",
   },
-});
+})
 
 let width = 0
 let height = 0
@@ -44,11 +56,11 @@ let bufferSize = 0
 
 const configWrite = device.createBuffer({
   size: 32,
-  usage: GPUBufferUsage.MAP_WRITE | GPUBufferUsage.COPY_SRC
+  usage: GPUBufferUsage.MAP_WRITE | GPUBufferUsage.COPY_SRC,
 })
 const config = device.createBuffer({
   size: 32,
-  usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+  usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
 })
 let store!: GPUBuffer
 let output!: GPUBuffer
@@ -58,8 +70,8 @@ let bindGroup!: GPUBindGroup
 resize()
 renderLoop()
 
-function init(size: number){
-  if(bufferSize >= size) return
+function init(size: number) {
+  if (bufferSize >= size) return
   size = Math.ceil(size / 1024) * 1024
   bufferSize = size
 
@@ -74,7 +86,7 @@ function init(size: number){
     size,
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
   })
-  
+
   read?.destroy()
   read = device.createBuffer({
     size,
@@ -84,10 +96,10 @@ function init(size: number){
   bindGroup = device.createBindGroup({
     layout: bindGroupLayout,
     entries: [
-      { binding: 0, resource: { buffer: config }},
-      { binding: 1, resource: { buffer: store }},
-      { binding: 2, resource: { buffer: output }},
-    ]
+      { binding: 0, resource: { buffer: config } },
+      { binding: 1, resource: { buffer: store } },
+      { binding: 2, resource: { buffer: output } },
+    ],
   })
 }
 
@@ -96,20 +108,20 @@ function resize() {
   height = canvas.height = window.innerHeight
 }
 
-async function render(time: number, iteration: number){
-  const commandEncoder = device.createCommandEncoder();
+async function render(time: number, iteration: number) {
+  const commandEncoder = device.createCommandEncoder()
 
   const imageSize = width * height * 4
   init(imageSize)
 
-  await configWrite.mapAsync(GPUMapMode.WRITE);
-  const configBuffer = configWrite.getMappedRange();
-  new Uint32Array(configBuffer).set([width, height, time, iteration]);
-  configWrite.unmap();
+  await configWrite.mapAsync(GPUMapMode.WRITE)
+  const configBuffer = configWrite.getMappedRange()
+  new Uint32Array(configBuffer).set([width, height, time, iteration])
+  configWrite.unmap()
 
-  commandEncoder.copyBufferToBuffer(configWrite, 0, config, 0, config.size);
+  commandEncoder.copyBufferToBuffer(configWrite, 0, config, 0, config.size)
 
-  const computePass = commandEncoder.beginComputePass();
+  const computePass = commandEncoder.beginComputePass()
   computePass.setPipeline(pipeline)
   computePass.setBindGroup(0, bindGroup)
   computePass.dispatchWorkgroups(Math.ceil(width / 8), Math.ceil(height / 8))
@@ -122,20 +134,23 @@ async function render(time: number, iteration: number){
   await read.mapAsync(GPUMapMode.READ)
   const out = read.getMappedRange()
 
-  const img = new ImageData(new Uint8ClampedArray(out, 0, imageSize), width, height)
-  ctx?.putImageData(img, 0, 0) 
+  const img = new ImageData(
+    new Uint8ClampedArray(out, 0, imageSize),
+    width,
+    height,
+  )
+  ctx?.putImageData(img, 0, 0)
   read.unmap()
 }
-
 
 async function renderLoop() {
   const start = Date.now()
   let iteration = 0
-  while(true) {
+  while (true) {
     console.time("frame")
     await render(Date.now() - start, iteration)
     console.timeEnd("frame")
-    await new Promise(r => window.requestAnimationFrame(r))
-    iteration ++
+    await new Promise((r) => window.requestAnimationFrame(r))
+    iteration++
   }
 }
