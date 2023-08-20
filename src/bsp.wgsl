@@ -21,8 +21,9 @@ const debug_hit = Hit(1, vec3f(1), null_hit.material);
 var<private> bsp_stack: array<BspStackEntry, bsp_stack_max>;
 
 fn hit_bsp(ray: Ray, index: u32) -> Hit {
-  var cur = BspStackEntry(index, 0, inf, null_hit);
+  var cur = BspStackEntry(index, epsilon, inf, null_hit);
   var stack_next = 0u;
+  var best_hit = null_hit;
 
   while(true){
     let near = cur.near;
@@ -51,7 +52,7 @@ fn hit_bsp(ray: Ray, index: u32) -> Hit {
     }
 
     if(in_far && tail == 0 && front) {
-      return new_hit;
+      best_hit = new_hit;
     }
 
     var pushed = false;
@@ -76,5 +77,5 @@ fn hit_bsp(ray: Ray, index: u32) -> Hit {
     }
   }
 
-  return null_hit;
+  return best_hit;
 }

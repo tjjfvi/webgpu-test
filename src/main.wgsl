@@ -52,5 +52,9 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
   store[index] += color;
   color = store[index] / f32(config.iter + 1);
 
-  output[index] = pack4x8unorm(vec4f(color.rgb, 1));
+  output[index] = pack4x8unorm(vec4f(filmic(color.rgb), 1));
+}
+
+fn filmic(color: vec3f) -> vec3f {
+    return 1 - (1/(5 * (color * color) + 1.));
 }

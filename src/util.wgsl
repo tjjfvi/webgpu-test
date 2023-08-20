@@ -1,6 +1,8 @@
 
 const tau = 6.283185307;
 
+const epsilon = 0.0001;
+
 var<private> rng: u32;
 
 fn xrng(rng: u32) -> u32 {
