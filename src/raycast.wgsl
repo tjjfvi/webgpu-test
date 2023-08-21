@@ -5,11 +5,10 @@ const bounce_limit = 10;
 
 const too_dark_2 = 0.01;
 
-fn raycast(init_ray: Ray) -> vec4f {
+fn raycast(init_ray: Ray) -> vec3f {
   var ray = init_ray;
   var ray_color = vec3f(1, 1, 1);
   var light = vec3f(0, 0, 0);
-  var diffuseness = 0.;
 
   for(var i = 0; i < bounce_limit; i++) {
     let hit = hit_scene(ray);
@@ -39,7 +38,6 @@ fn raycast(init_ray: Ray) -> vec4f {
 
     light += ray_color * hit.material.emission;
     ray_color *= hit.material.albedo;
-    diffuseness += (1 - hit.material.specularity);
 
     ray = Ray(spot, out);
 
@@ -48,7 +46,7 @@ fn raycast(init_ray: Ray) -> vec4f {
 
   light += ray_color * ambient(ray);
 
-  return vec4f(light, diffuseness);
+  return vec3f(light);
 }
 
 struct Ray {

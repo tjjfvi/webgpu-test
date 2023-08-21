@@ -5,7 +5,7 @@ struct Config {
 }
 
 @group(0) @binding(0) var<storage, read> config : Config;
-@group(0) @binding(1) var<storage, read_write> store : array<vec4f>;
+@group(0) @binding(1) var<storage, read_write> store : array<vec3f>;
 @group(0) @binding(2) var<storage, read_write> output : array<u32>;
 
 @compute @workgroup_size(8, 8)
@@ -21,30 +21,30 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
   let y = vec3f(0, 1, 0);
   let x = normalize(cross(z, y));
 
-  let camera_pos = 2 * z;
+  let camera_pos = 5 * z;
   let camera_fwd = -z;
   let camera_x = x;
   let camera_y = cross(x, z);
 
-  let camera_size = 3.0;
   let fov = radians(60.0);
-  let camera_depth = camera_size / sin(fov);
+  let camera_depth = 5.0;
+  let camera_size = camera_depth * sin(fov);
   let pixel_size = camera_size / f32(config.size.y);
+  let blur_amount = .125;
 
-  let pos = (vec2<f32>(global_id.xy) - vec2<f32>(config.size) / 2) * pixel_size;
-
-  let dst = camera_pos + camera_x * pos.x + camera_y * pos.y;
-  let src = camera_pos - camera_fwd * camera_depth;
-  let dir = normalize(dst - src);
-  let ray = Ray(src, dir);
-
-  var color = vec4f();
+  var color = vec3f();
 
   var i = 0u;
   for(; i < rounds; i++){
     rng = xrng(xrng(xrng(xrng(xrng(index) + config.iter)) + i));
+    let pos = (vec2f(global_id.xy) + vec2f(rand(), rand()) - vec2f(config.size) / 2) * pixel_size;
+    let dst = camera_pos + camera_x * pos.x + camera_y * pos.y + camera_fwd * camera_depth;
+    let theta = rand() * tau;
+    let r = sqrt(rand());
+    let src = camera_pos + camera_x * cos(theta) * r * blur_amount + camera_y * sin(theta) * r * blur_amount;
+    let dir = normalize(dst - src);
+    let ray = Ray(src, dir);
     color += raycast(ray);
-    if(color.a == 0) { i++; break; }
   }
 
   color /= f32(i);
@@ -52,7 +52,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
   store[index] += color;
   color = store[index] / f32(config.iter + 1);
 
-  output[index] = pack4x8unorm(vec4f(filmic(color.rgb), 1));
+  output[index] = pack4x8unorm(vec4f(filmic(color), 1));
 }
 
 fn filmic(color: vec3f) -> vec3f {
